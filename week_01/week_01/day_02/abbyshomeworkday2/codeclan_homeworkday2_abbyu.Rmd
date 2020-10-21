@@ -1,0 +1,59 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Cmd+Shift+Enter*. 
+
+```{r}
+library(tidyverse)
+```
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Cmd+Option+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Cmd+Shift+K* to preview the HTML file). 
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+```{r}
+starbucks_calories <- read_csv("starbucks_drinkMenu_expanded.csv")
+```
+
+```{r}
+starbucks_calories
+dim(starbucks_calories)
+class(starbucks_calories)
+colnames(starbucks_calories)
+```
+```{r}
+drinks_caloriesq2 <- (select(starbucks_calories, "Beverage_category", "Beverage", "Beverage_prep", "Calories"))
+  filter(drinks_caloriesq2,!is.na(drinks_caloriesq2))
+```
+```{r}
+drinks_caloriesq2 <- mutate(drinks_caloriesq2, calorie_diff = 135 - Calories)
+```
+
+```{r}
+library(dplyr)
+```
+
+```{r}
+grouped_drinks <- group_by(drinks_caloriesq2, Beverage_category)
+summarise(grouped_drinks, mean(Calories))
+```
+```{r}
+head(grouped_drinks, 3)
+tail(grouped_drinks, 3)
+```
+
+```{r}
+avg_beverage_prep <-  group_by(drinks_caloriesq2, Beverage_prep)
+summarise(avg_beverage_prep, mean(Calories))
+```
+
+```{r}
+arrange(drinks_caloriesq2, Calories) %>% 
+  head(1)
+```
+
