@@ -1,0 +1,111 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+# Question 1
+
+```{r}
+library(tidyverse)
+```
+
+
+```{r}
+movies_data <- read_csv("/Users/AbbyUtama/codeclan_work/week_01/day_03/5_homework_cleaning_data/data/movies.csv")
+```
+```{r}
+dim(movies_data)
+head(movies_data)
+```
+Things needed to clean data 
+1. homepage; some URLs are empty
+2. budget -- some figures are in powered numbers
+3. Some films have no tagline ("NA")
+4.Some films have no revenue (0)
+5. some budgets registered as 0
+
+# Question 2
+
+```{r}
+movies_selected <- movies_data %>% 
+  select("title", "runtime", "budget")
+
+movies_selected
+```
+```{r}
+view(movies_selected)
+```
+
+# Question 3
+
+```{r}
+untitled_movies <- movies_selected %>% 
+  select(title) %>% 
+  na_if("--")
+
+sum(is.na(untitled_movies))
+```
+
+```{r}
+no_runtime <- movies_selected %>% 
+  select(runtime) %>% 
+  na_if("0")
+
+sum(is.na(no_runtime))
+```
+
+
+```{r}
+no_budget <- movies_selected %>% 
+  select(budget) %>% 
+  na_if("0")
+
+sum(is.na(no_budget))
+```
+
+#Question 4
+```{r}
+no_runtime <- movies_selected %>% 
+  select(runtime, budget, title) %>% 
+  na_if(0)
+
+sum(is.na(no_runtime))
+```
+
+#Question 5
+
+```{r}
+movies_imputed <- no_runtime %>% 
+  select(runtime, budget, title) %>% 
+  mutate(runtime = coalesce(runtime, median(runtime, na.rm = TRUE)))
+movies_imputed
+```
+#Question 6
+
+```{r}
+movies_imputed %>% 
+ slice_min(runtime, n = 10)
+```
+```{r}
+movies_imputed %>% 
+  slice_max(runtime, n = 10)
+```
+
+#Question 7
+```{r}
+movies_imputed %>% 
+  mutate(budget = if_else(budget < 100,
+                           median(budget),
+                           (budget)))
+```
+Extension
+
+#Question 1
+
+```{r}
+movie_budgets <- movies_data %>% 
+  mutate(budget_type = case_when(
+    budget < 12000000 ~ "Small budget",
+    budget < 40000000 ~ "Medium budget",
+    budget > 40000000 ~ "Big budget"))
+movie_budgets
+```
