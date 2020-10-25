@@ -1,0 +1,214 @@
+---
+title: "Weekend Homework"
+<output: html_notebook>
+---
+
+```{r}
+library(tidyverse)
+library(janitor)
+library(naniar)
+
+books_data <-read_delim("/Users/AbbyUtama/codeclan_work/week_01/day_5/weekend_homework/data/books.csv", delim = ",", 
+                        locale = locale(encoding = "UTF-8",
+                        date_format = '%d/%m/%Y'))
+                        
+cols(authors = col_character(),
+     average_rating = col_double(),
+     isbn = col_double(),
+     isbn13 = col_double(),
+     language_code = col_character(),
+     num_pages = col_double(),
+     text_review_count = col_double(),
+     publication_date = col_date(),
+     publisher = col_character())
+
+col_types = cols("isbn" = col_double() , "isbn13" = col_double())
+
+books_data <- clean_names(books_data)
+names(books_data)
+
+```
+***Viewing the data***
+```{r}
+dim(books_data)
+```
+
+```{r}
+str(books_data)
+```
+
+***Changing ISBN and ISBN-13 to Numerical***
+
+```{r}
+books_data <- books_data %>% 
+  select(book_id, title, authors, average_rating, isbn13, language_code, num_pages, ratings_count, text_reviews_count, publication_date, publisher) %>% 
+  transform(isbn13 = as.numeric(isbn13))
+
+books_data %>% 
+  summarise(count=sum(is.na(isbn13)))
+```
+
+***Languages***
+
+```{r}
+books_data %>% 
+  distinct(language_code)
+```
+Remove the different types of "Eng" and replace with "Eng"
+
+```{r}
+books_data <- books_data %>% 
+  mutate(language_code = recode(language_code,
+    "en-US" = "eng",
+    "en-GB" = "eng",
+    "en-CA" = "eng",
+    "enm" = "eng"
+  ))
+```
+
+See how many books are published in each language
+
+```{r}
+books_data %>% 
+  group_by(language_code) %>% 
+  summarise(length(book_id))
+```
+
+***Pages***
+
+Changing 0 pages to NA
+
+```{r}
+books_data <- books_data %>% 
+  mutate(num_pages, num_pages = na_if(num_pages, 0)) 
+
+books_data %>% 
+  summarise(count=sum(is.na(num_pages)))
+```
+Imputing the NA into the median number of pages
+```{r}
+imputed_books_data <- books_data %>% 
+  mutate(num_pages = coalesce(num_pages, median(num_pages, na.rm = TRUE)))
+
+imputed_books_data
+```
+***Ratings count and text reviews count***
+
+```{r}
+imputed_books_data <-imputed_books_data %>% 
+  mutate(ratings_count, ratings_count = na_if(ratings_count, 0)) %>% 
+  mutate(text_reviews_count, text_reviews_count = na_if(text_reviews_count, 0))
+
+imputed_books_data <- imputed_books_data %>% 
+  mutate(ratings_count = coalesce(ratings_count, median(ratings_count, na.rm = TRUE))) %>% 
+  mutate(text_reviews_count = coalesce(text_reviews_count, median(text_reviews_count, na.rm = TRUE)))
+
+imputed_books_data
+```
+***Number of ratings***
+
+```{r}
+imputed_books_data %>% 
+  select(ratings_count) %>% 
+  arrange(ratings_count) %>% 
+  tail(1000)
+```
+
+Making groups of ratings based on how many times each book was rated
+```{r}
+ratings_by_group <- imputed_books_data %>% 
+  mutate(ratings_count = case_when(
+    ratings_count < 100 ~ "0-100 ratings",
+    ratings_count < 1000 ~ "100-1000 ratings",
+    ratings_count < 10000 ~ "1000-10,000 ratings",
+    ratings_count < 50000 ~ "10,000 - 50,000 ratings",
+    ratings_count < 100000 ~ "50,000 - 100,000 ratings",
+    ratings_count < 500000 ~ "100,000 - 500,000 ratings",
+    ratings_count < 1000000 ~ "500,000 - 1,000,000 ratings",
+    ratings_count < 2000000 ~ "1,000,000 - 2,000,000 ratings",
+    ratings_count > 2000000 ~ "2,000,000+ ratings"
+  ))
+```
+
+Grouped into the number of ratings, and how many books are there in each group
+
+```{r}
+ratings_by_group %>% 
+  group_by(ratings_count) %>% 
+  summarise(number_of_books = length(book_id))
+```
+
+***Average rating per publisher***
+```{r}
+imputed_books_data %>% 
+  distinct(publisher)
+```
+```{r}
+imputed_books_data %>% 
+  group_by(publisher) %>% 
+  summarise(number_of_books = length(book_id))
+```
+
+
+Recode some publisher names
+
+
+```{r}
+imputed_books_data <- imputed_books_data %>% 
+  mutate(publisher = recode(
+    "ACE" = "Ace",
+    "Addison Wesley" = "Addison Wesley Publishing Company",
+    "Alfred A.Knopf" = "Alfred A. Knopf",
+    "Amistad Press" = "Amistad Press",
+    "Amherst Media  Inc." = "Amherst Media",
+    "Atlantic" = "Atlantic Books",
+    "Berkley" = "Berkley Books",
+    "Scholastic Inc" = "Scholastic",
+    "Back Bay Books" = "Back Bay",
+    "Baen Books" = "Baen",
+    "Ballantine" = "Ballantine",
+    "BALLANTINE BOOKS" = "Ballantine",
+    "Ballantine Books" = "Ballantine",
+    "Bantam Fanfare" = "Bantam",
+    "Bantam Doubleday Dell (NYC)" = "Bantam Doubleday Dell",
+    "Bantam Doubleday Dell Publishing Company Inc" = "Bantam Doubleday Dell",
+    .x = (publisher)
+  ))
+```
+
+
+Impute average ratings
+```{r}
+imputed_ratings <- imputed_ratings %>% 
+  mutate(average_rating = coalesce(average_rating, mean(average_rating, na.rm = TRUE)))
+```
+
+
+```{r}
+imputed_ratings %>% 
+  group_by(publisher) %>% 
+ summarise((mean(average_rating, na.rm= TRUE)))
+
+```
+
+***Popularity of books***
+```{r}
+imputed_books_data <- imputed_books_data %>%
+  mutate(popularity = text_reviews_count * average_rating)
+
+imputed_books_data %>% 
+  select(popularity)
+  
+```
+Grouping the publishers by popularity
+```{r}
+imputed_books_data %>% 
+  group_by(publisher) %>% 
+  summarise(publisher, mean(popularity, na.rm=TRUE))
+```
+
+***Questions***
+
+1. How to remove dates from character vectors????
+2. How to move data from one column to the next???
+

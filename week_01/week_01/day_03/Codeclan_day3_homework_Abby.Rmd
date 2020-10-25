@@ -1,5 +1,5 @@
 ---
-title: "R Notebook"
+title: "My homework"
 output: html_notebook
 ---
 # Question 1
@@ -62,7 +62,8 @@ no_budget <- movies_selected %>%
 sum(is.na(no_budget))
 ```
 
-#Question 4
+# Question 4
+
 ```{r}
 no_runtime <- movies_selected %>% 
   select(runtime, budget, title) %>% 
@@ -71,15 +72,14 @@ no_runtime <- movies_selected %>%
 sum(is.na(no_runtime))
 ```
 
-#Question 5
+# Question 5
 
 ```{r}
 movies_imputed <- no_runtime %>% 
-  select(runtime, budget, title) %>% 
   mutate(runtime = coalesce(runtime, median(runtime, na.rm = TRUE)))
 movies_imputed
 ```
-#Question 6
+# Question 6
 
 ```{r}
 movies_imputed %>% 
@@ -90,7 +90,8 @@ movies_imputed %>%
   slice_max(runtime, n = 10)
 ```
 
-#Question 7
+# Question 7
+
 ```{r}
 movies_imputed %>% 
   mutate(budget = if_else(budget < 100,
@@ -99,13 +100,23 @@ movies_imputed %>%
 ```
 Extension
 
-#Question 1
+# Question 1
 
 ```{r}
 movie_budgets <- movies_data %>% 
   mutate(budget_type = case_when(
     budget < 12000000 ~ "Small budget",
     budget < 40000000 ~ "Medium budget",
-    budget > 40000000 ~ "Big budget"))
+    budget >= 40000000 ~ "Big budget"))
 movie_budgets
 ```
+# Question 2 answers
+
+```{r}
+movies_data %>%
+  summarise(across(where(is.numeric), ~sum(is.na(.x))))
+
+movies_data %>%
+  summarise(across(where(is.character), ~sum(is.na(.x))))
+```
+
