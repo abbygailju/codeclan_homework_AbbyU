@@ -1,0 +1,130 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+#MVP
+
+```{r}
+library(tidyverse)
+library(janitor)
+```
+
+***Joins***
+
+Question 1
+
+```{r}
+credit_card_data <- read_csv("CardBase.csv")
+  
+cc_data <- clean_names(credit_card_data)
+
+cc_data
+```
+
+
+```{r}
+customer_data <- read_csv("CustomerBase.csv")
+
+cust_data <- clean_names(customer_data)
+
+cust_data
+```
+```{r}
+fra_data <- read_csv("FraudBase.csv")
+
+fraud_data <- clean_names(fra_data)
+
+fraud_data
+```
+
+```{r}
+trans_data <- read_csv("TransactionBase.csv")
+
+transaction_data <- clean_names(trans_data)
+
+transaction_data
+```
+
+Question 2
+```{r}
+customer_card_details <- right_join(cc_data, cust_data, by = "cust_id")
+customer_card_details
+```
+Question 3
+```{r}
+transactions_and_fraud <- right_join(fraud_data, transaction_data, by = "transaction_id")
+
+transactions_and_fraud
+```
+Question 4
+```{r}
+card_and_transactions <- semi_join(cc_data, transaction_data, by = c("card_number" = "credit_card_id") )
+
+card_and_transactions
+```
+
+***Tidyr***
+
+Question 5
+
+```{r}
+hat_data <- read_csv("data/hat_observations.csv")
+hat_data
+```
+```{r}
+hat_observations <- hat_data %>% 
+  separate(observation, into = c("colour", "type"), sep = ",")
+
+hat_observations
+```
+
+Question 6
+```{r}
+united_date <- hat_observations %>% 
+  unite(col = date, c("day", "month", "year"), sep = "/")
+united_date
+```
+
+```{r}
+beret_count_data <- united_date %>% 
+  filter(type == "beret") %>% 
+  group_by(date) %>% 
+  summarise(date, beret_count = observation_count)
+
+beret_count_data %>% 
+  arrange(desc(beret_count))
+
+
+```
+
+#Extension
+
+***Joins***
+```{r}
+credit_customer_data <- full_join(cc_data, cust_data, by = "cust_id")
+
+credit_customer_transactions <- right_join(credit_customer_data, transaction_data, by = c("card_number" = "credit_card_id"))
+
+full_data <- right_join(credit_customer_transactions, fraud_data, by = "transaction_id")
+
+full_data
+```
+
+***tidyr***
+
+```{r}
+exam_data <- read_csv("data/exam_scores.csv")
+exam_data
+```
+
+```{r}
+fixed_exam_data <- exam_data %>% 
+  pivot_longer(cols = starts_with("exam"),
+               names_to = "exam_question", 
+               names_repair = "unique",
+               values_to = "scores" 
+               )
+
+fixed_exam_data
+```
+
