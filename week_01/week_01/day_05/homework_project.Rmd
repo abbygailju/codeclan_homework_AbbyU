@@ -1,6 +1,6 @@
 ---
 title: "Weekend Homework"
-<output: html_notebook>
+output: html_notebook
 ---
 
 ```{r}
