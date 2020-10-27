@@ -1,0 +1,114 @@
+---
+title: "Tidyverse consolidartion homework"
+output: html_notebook
+---
+
+
+```{r}
+library(tidyverse)
+library(stringr)
+```
+
+```{r}
+tweety <- read_csv("data/code_clan_tweets.csv")
+
+tweety
+```
+
+```{r}
+dim(tweety)
+
+colnames(tweety)
+
+str(tweety)
+```
+Favourited tweets
+```{r}
+tweety %>% 
+  mutate(uncounted = if_else(is_quote == FALSE, (favorite_count), 0)) %>% 
+  count(sum(uncounted))
+```
+```{r}
+tweety %>% 
+  count(sum(favorite_count))
+```
+Mean number of retweets
+```{r}
+tweety %>% 
+  mutate(uncounted_quotes = if_else(is_quote == FALSE, (retweet_count), 0)) %>%
+  group_by(retweet_source) %>% 
+  summarise(mean_retweets = mean(uncounted_quotes), .groups = "keep")
+```
+Total likes
+
+```{r}
+tweety_3 <- tweety %>% 
+  mutate(media_types = if_else(is.na(media_type), "text", media_type))
+```
+
+
+```{r}
+tweety_3 %>% 
+  group_by(media_types) %>% 
+  summarise(total_likes = sum(favorite_count))
+```
+
+Mean number of characters
+
+```{r}
+tweety %>% 
+  select(display_text_width) %>% 
+  summarise(mean_width = mean(display_text_width))
+```
+Joining the code_clan info
+
+```{r}
+code_info <- read_csv("data/code_clan_info.csv")
+
+code_info
+```
+
+```{r}
+code_tweety <- inner_join(code_info, tweety, by = "tweet_id")
+
+code_tweety
+```
+hashtag codeclan
+```{r}
+codeclan_hashtags <- code_tweety %>% 
+  select(tweet_id, hashtags) %>% 
+  mutate(hashtags = str_to_lower(hashtags))
+
+codeclan_hashtags
+```
+```{r}
+pattern <- "c\\("
+
+codeclan_hashtags %>% 
+  mutate(hashtags_multiple = str_detect(hashtags, pattern, negate = TRUE))
+```
+
+Edinburgh mentions
+```{r}
+pattern <- ("edinburgh")
+
+tweety_3<- tweety_3 %>% 
+  filter(media_types == "text") %>% 
+  mutate(text = str_to_lower(text)) %>% 
+  mutate(edinburgh_mentions = str_detect(text, pattern, negate = TRUE))
+
+tweety_3
+
+tweety_3 %>% 
+  count(edinburgh_mentions = TRUE)
+```
+
+Tweeted usernames
+```{r}
+pattern = ("@[a-z0-9_.]+")
+
+tweety_two <- tweety %>% 
+  mutate(text = str_to_lower(text)) %>% 
+  mutate(mentions = str_extract_all(text, pattern))
+```
+
