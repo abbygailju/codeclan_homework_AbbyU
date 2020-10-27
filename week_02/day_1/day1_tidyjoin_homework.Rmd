@@ -14,7 +14,7 @@ library(janitor)
 Question 1
 
 ```{r}
-credit_card_data <- read_csv("CardBase.csv")
+credit_card_data <- read_csv("data/CardBase.csv")
   
 cc_data <- clean_names(credit_card_data)
 
@@ -23,14 +23,14 @@ cc_data
 
 
 ```{r}
-customer_data <- read_csv("CustomerBase.csv")
+customer_data <- read_csv("data/CustomerBase.csv")
 
 cust_data <- clean_names(customer_data)
 
 cust_data
 ```
 ```{r}
-fra_data <- read_csv("FraudBase.csv")
+fra_data <- read_csv("data/FraudBase.csv")
 
 fraud_data <- clean_names(fra_data)
 
@@ -38,7 +38,7 @@ fraud_data
 ```
 
 ```{r}
-trans_data <- read_csv("TransactionBase.csv")
+trans_data <- read_csv("data/TransactionBase.csv")
 
 transaction_data <- clean_names(trans_data)
 
@@ -126,5 +126,13 @@ fixed_exam_data <- exam_data %>%
                )
 
 fixed_exam_data
+```
+
+```{r}
+long_exam_data <- fixed_exam_data %>% 
+  separate(exam_question, sep = "Q", into = c("extra_column", "exam_question")) %>% 
+  select(-extra_column)
+
+long_exam_data
 ```
 
