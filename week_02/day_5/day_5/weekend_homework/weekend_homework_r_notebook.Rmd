@@ -1,0 +1,142 @@
+---
+title: "R Homework"
+output: html_notebook
+---
+#My homework
+
+**loading the data**
+
+```{r}
+library(tidyverse)
+
+library(janitor)
+
+library(assertr)
+```
+
+```{r}
+meteor_data <- read_csv("meteorite_landings.csv")
+```
+```{r}
+str(meteor_data)
+```
+
+```{r}
+meteor_data
+```
+##Cleaning names
+```{r}
+meteor_data <- clean_names(meteor_data)
+```
+```{r}
+meteor_data <- meteor_data %>% 
+  mutate(name = str_to_lower(name))
+
+meteor_data <- meteor_data %>% 
+  mutate( fall = str_to_lower(fall))
+
+meteor_data
+```
+##Separate names 
+
+```{r}
+meteor_data_wider <- meteor_data %>% 
+  separate(geo_location, into = c("latitude", "longtitude"), sep = ",")
+
+meteor_data_wider
+```
+***Removing unneccessary information***
+
+```{r}
+meteor_data_wider <- meteor_data_wider %>% 
+  mutate(latitude = str_remove(latitude, pattern = "\\("))
+
+meteor_data_wider <- meteor_data_wider %>% 
+  mutate(longtitude = str_remove(longtitude, pattern = "\\)"))
+
+meteor_data_wider
+```
+***Setting values as numeric***
+
+```{r}
+meteor_data_wider <- meteor_data_wider %>% 
+  mutate(latitude = as.numeric(latitude))
+
+meteor_data_wider <- meteor_data_wider %>% 
+  mutate(longtitude = as.numeric(longtitude))
+
+meteor_data_wider
+```
+##Removing NA in longtitude and latitude with 0
+
+```{r}
+meteor_data_wider <- meteor_data_wider %>% 
+  mutate(latitude = if_else(is.na(latitude), 0, (latitude)))
+
+meteor_data_wider
+
+meteor_data_wider %>% 
+  count(is.na(latitude))
+```
+```{r}
+meteor_data_wider <- meteor_data_wider %>% 
+  mutate(longtitude = if_else(is.na(longtitude), 0, (longtitude)))
+
+meteor_data_wider
+
+meteor_data_wider %>% 
+  count(is.na(longtitude))
+```
+##Removing values less than 1000g
+```{r}
+meteor_data_heavy <- meteor_data_wider %>% 
+  filter(mass_g >= 1000)
+
+meteor_data_heavy
+```
+##Ordering the data by year of discovery - from earliest to latest
+
+```{r}
+meteor_data_heavy <- meteor_data_heavy %>% 
+  arrange(year)
+
+meteor_data_heavy
+```
+##Bit of assertive programming
+
+***Let's verify the longtitude and latitude are correct***
+```{r}
+meteor_data_heavy %>% 
+  verify(latitude >= -90 & latitude <= 90) %>% 
+  verify(longtitude >= -180 & longtitude <= 180) 
+```
+***No error, longtitude and latitude values were correct***
+
+##10 heaviest meteorites
+
+```{r}
+meteor_data_heavy <- meteor_data_heavy %>% 
+  mutate(mass_g = sum(mass_g/1000000))
+
+meteor_data_heavy <-meteor_data_heavy %>%
+ rename(mass_tonnes = mass_g)
+
+meteor_data_heavy
+```
+##Average mass of meteorites
+
+```{r}
+meteor_data_wider %>%
+  group_by(fall) %>% 
+  summarise(avg_mass = mean(mass_g, na.rm = TRUE))
+```
+
+
+##Average number of meteorites each year
+```{r}
+meteor_data_wider %>% 
+  filter(year >= 2000) %>% 
+  group_by(year) %>% 
+   summarise(number_that_fell = sum(length(id)))
+```
+

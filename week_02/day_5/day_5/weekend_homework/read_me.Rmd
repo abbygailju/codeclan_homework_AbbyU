@@ -1,0 +1,281 @@
+---
+title: "Read me homework file"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+---
+title: "R Homework"
+output: html_notebook
+---
+# My homework
+
+**loading the data**
+
+```{r}
+library(tidyverse)
+
+library(janitor)
+
+library(assertr)
+```
+
+```{r}
+meteor_data <- read_csv("meteorite_landings.csv")
+```
+```{r}
+str(meteor_data)
+```
+
+
+
+```{r}
+meteor_data
+```
+
+
+## Cleaning names using the clean_names function on the Janitor package
+```{r}
+meteor_data <- clean_names(meteor_data)
+```
+
+***changing the values to lowercase using str_to_lower function***
+```{r}
+meteor_data <- meteor_data %>% 
+  mutate(name = str_to_lower(name))
+
+meteor_data <- meteor_data %>% 
+  mutate( fall = str_to_lower(fall))
+
+meteor_data
+```
+## Separate latitude and longtitude
+
+# I use the separate function so that latitude goes in one column and longtitude goes on the next
+
+```{r}
+meteor_data_wider <- meteor_data %>% 
+  separate(geo_location, into = c("latitude", "longtitude"), sep = ",")
+
+meteor_data_wider
+```
+***Removing unneccessary information i.e. the parantheses ***
+
+```{r}
+meteor_data_wider <- meteor_data_wider %>% 
+  mutate(latitude = str_remove(latitude, pattern = "\\("))
+
+meteor_data_wider <- meteor_data_wider %>% 
+  mutate(longtitude = str_remove(longtitude, pattern = "\\)"))
+
+meteor_data_wider
+```
+***Setting values as numeric***
+
+```{r}
+meteor_data_wider <- meteor_data_wider %>% 
+  mutate(latitude = as.numeric(latitude))
+
+meteor_data_wider <- meteor_data_wider %>% 
+  mutate(longtitude = as.numeric(longtitude))
+
+meteor_data_wider
+```
+## Removing NA in longtitude and latitude with 0
+
+***using if_else function to set any NA or missing values to "0"***
+```{r}
+meteor_data_wider <- meteor_data_wider %>% 
+  mutate(latitude = if_else(is.na(latitude), 0, (latitude)))
+
+meteor_data_wider
+```
+***how many NA's are there after removing them?***
+
+```{r}
+meteor_data_wider %>% 
+  count(is.na(latitude))
+```
+***Doing the same to longtitude***
+```{r}
+meteor_data_wider <- meteor_data_wider %>% 
+  mutate(longtitude = if_else(is.na(longtitude), 0, (longtitude)))
+
+meteor_data_wider
+```
+***How many NA's are there left?***
+
+```{r}
+meteor_data_wider %>% 
+  count(is.na(longtitude))
+```
+
+
+## Removing values less than 1000g
+```{r}
+meteor_data_heavy <- meteor_data_wider %>% 
+  filter(mass_g >= 1000)
+```
+
+
+```{r}
+meteor_data_heavy %>% 
+  slice_min(mass_g, n = 10, with_ties = TRUE)
+```
+## Ordering the data by year of discovery - from earliest to latest
+
+```{r}
+meteor_data_heavy <- meteor_data_heavy %>% 
+  arrange(year)
+
+meteor_data_heavy
+```
+## Bit of assertive programming
+
+***Let's verify the longtitude and latitude are correct***
+```{r}
+meteor_data_heavy %>% 
+  verify(latitude >= -90 & latitude <= 90) %>% 
+  verify(longtitude >= -180 & longtitude <= 180) 
+```
+***No error, longtitude and latitude values were correct***
+
+## The 10 largest meteorites
+ 
+ ***The 10 heaviest meteorites***
+```{r}
+meteor_data_heavy %>% 
+  arrange(desc(mass_g)) %>% 
+  summarise(name, mass_g, year) %>% 
+  head(10)
+```
+***let's convert the masses into tonnes***
+```{r}
+meteor_data_heavy <- meteor_data_heavy %>% 
+  mutate(mass_g = sum(mass_g/1000000))
+```
+
+
+```{r}
+meteor_data_heavy<- meteor_data_heavy %>% 
+  rename(mass_tonnes = mass_g)
+meteor_data_heavy
+```
+***let's look at the 10 heaviest meteors again***
+
+```{r}
+meteor_data_heavy %>% 
+  arrange(desc(mass_tonnes)) %>% 
+  summarise(name, mass_tonnes, year) %>% 
+  head(10)
+```
+## The average mass of meteorites for those that fell vs those that were found
+
+```{r}
+meteor_data_wider %>%
+  group_by(fall) %>% 
+  summarise(avg_mass = mean(mass_g, na.rm = TRUE))
+```
+
+
+## The average number of meteorites each year for every year since 2000!
+```{r}
+meteor_data_wider %>% 
+  filter(year >= 2000) %>% 
+  group_by(year) %>% 
+   summarise(number_that_fell = sum(length(id)))
+```
+***there seems to be something wrong, as one year is counted as 2101***
+
+```{r}
+meteor_data_wider %>% 
+  filter(year >=2000) %>% 
+  arrange(desc(year))
+```
+***I'll just check the ids to figure out what happened***
+```{r}
+meteor_data_wider %>% 
+  filter(id == 57149)
+```
+```{r}
+meteor_data_wider %>% 
+  filter(id == 57151)
+```
+***This meteor seems to be between 2011 and 2012, I will just assume it was in 2011 as '2101' seems to be a typo of that year***
+
+
+```{r}
+meteor_data_wider <-meteor_data_wider %>% 
+  mutate(year = str_replace(year, pattern = "2101", "2011"))
+
+meteor_data_wider %>% 
+  arrange(desc(year))
+```
+***no more years in 2101!***
+
+# Let's run the previous chunk again
+```{r}
+meteor_data_wider %>% 
+  filter(year >= 2000) %>% 
+  group_by(year) %>% 
+   summarise(number_that_fell = sum(length(id)))
+```
+
+
+
+### Extension!
+
+## Imputing the mass -- meteorites probably don't weight 0g
+
+***Let's look at the data***
+
+```{r}
+meteor_data_wider %>% 
+  arrange(mass_g)
+```
+***Keeping in min that 'gove' and 'miller range 090478' are examples of meteorites with allegedly no mass**
+
+```{r}
+meteor_data_imputed <- meteor_data_wider %>% 
+  mutate(mass_g = na_if(mass_g, 0)) %>% 
+  mutate(mass_g = coalesce(mass_g, mean(mass_g, na.rm = TRUE)))
+
+meteor_data_imputed
+```
+```{r}
+meteor_data_imputed %>% 
+  filter(name == "gove")
+```
+***gove is no longer weighing 0g, but let's assume it is an average sized meteor***
+
+### Extension!
+
+## Imputing the mass -- meteorites probably don't weight 0g
+
+***Let's look at the data***
+```{r}
+meteor_data_wider %>% 
+  arrange(mass_g)
+```
+
+**Keeping in min that 'gove' and 'miller range 090478' are examples of meteorites with allegedly no mass**
+
+```{r}
+meteor_data_imputed <- meteor_data_wider %>% 
+  mutate(mass_g = na_if(mass_g, 0)) %>% 
+  mutate(mass_g = coalesce(mass_g, mean(mass_g, na.rm = TRUE)))
+
+meteor_data_imputed
+```
+
+```{r}
+meteor_data_imputed %>% 
+  filter(name == "gove")
+```
+
+***gove is no longer weighing 0g, so let's assume it is an average sized meteor***
+
+
