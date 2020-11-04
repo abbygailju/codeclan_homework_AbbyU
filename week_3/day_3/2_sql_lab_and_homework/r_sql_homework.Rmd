@@ -1,0 +1,76 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+```{r}
+library(RPostgres)
+```
+
+```{r}
+source("~/acme_credentials.R")
+```
+
+```{r}
+db_connection = dbConnect(
+  drv = Postgres(), 
+  user = username,
+  password = password,
+  dbname = "acme_pool",
+  host = "db-postgresql-lon1-94437-do-user-4831272-0.a.db.ondigitalocean.com",
+  port = 25061,
+  bigint = "numeric"
+)
+```
+
+```{r}
+dbListTables(conn = db_connection)
+```
+
+## Q4
+```{sql, connection = db_connection}
+SELECT CONCAT(first_name, ' ', last_name) AS full_name
+FROM employees
+```
+## Q5
+```{sql, connection = db_connection}
+SELECT id, first_name, last_name, email, team_id AS team_name
+FROM employees
+```
+## Q6
+```{sql, connection = db_connection}
+SELECT t.name, 
+      COUNT(e.id) AS team_size
+FROM employees AS e INNER JOIN teams AS t
+ON e.team_id = t.id
+GROUP BY t.name
+ORDER BY COUNT(e.id) DESC
+```
+## Q7
+
+```{sql, connection = db_connection}
+SELECT *
+FROM employees
+WHERE email NOT LIKE '%@%' OR email IS NULL
+```
+
+# EXTENSIONS
+
+```{sql, connection = db_connection}
+SELECT e.*,
+  f.date
+FROM employees AS e INNER JOIN feedbacks AS f
+ON e.id = f.employee_id
+ORDER BY f.date DESC NULLS LAST LIMIT 1
+```
+```{sql, connection = db_connection}
+SELECT t.name,
+COUNT(e.id)
+FROM employees AS e INNER JOIN teams AS t
+ON e.team_id = t.id
+WHERE e.first_name LIKE '_'
+GROUP BY t.name
+ORDER BY COUNT(e.id) DESC NULLS LAST LIMIT 1
+```
+
+
+
