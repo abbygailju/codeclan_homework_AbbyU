@@ -1,0 +1,273 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+```{r}
+library(tidyverse)
+library(janitor)
+```
+```{r}
+salaries <- read.csv("~/codeclan_homework_AbbyU/week_04/dplyr_practice_hw/data/salaries.csv")
+```
+
+```{r}
+str(salaries)
+```
+
+
+## 1 dplyr verbs
+
+#### 1. 
+```{r}
+salaries %>% 
+  select(beginning_salary, current_salary)
+```
+#### 2. 
+
+```{r}
+salaries %>% 
+  select(age, current_salary) %>% 
+  filter(age > 50) %>% 
+  filter(current_salary > 20000)
+```
+#### 3. 
+
+```{r}
+salaries %>% 
+  arrange(desc(current_salary))
+```
+#### 4. 
+
+```{r}
+salaries <- salaries %>% 
+  mutate(beginning_salaries_pence = beginning_salary*100) %>% 
+  mutate(current_salary_pence = current_salary*100)
+
+salaries %>% 
+  select(beginning_salary, beginning_salaries_pence, current_salary, current_salary_pence)
+```
+#### 5.
+
+```{r}
+salaries %>% 
+  summarise(maximum_age = max(age), minimum_age = min(age))
+```
+#### 6.
+
+```{r}
+salaries %>% 
+  summarise(max_salary = max(current_salary), min_salary = min(current_salary))
+```
+#### 7. 
+
+```{r}
+salaries %>% 
+  filter(age < 30)
+```
+#### 8. 
+
+```{r}
+salaries %>% 
+  group_by(educational_level) %>% 
+  summarise(gender, job_seniority, educational_level, age, current_salary, work_experience, employment_category, is_white) %>%
+  arrange(educational_level, age)
+```
+
+#### 9. 
+```{r}
+salaries %>% 
+   select_if(~!is.numeric(.))
+```
+#### 10. 
+```{r}
+salaries %>% 
+  filter(work_experience < 2 | educational_level < 12)
+```
+#### 11.
+```{r}
+salaries <- salaries %>% 
+  mutate(current_salary = current_salary/1000) %>% 
+  mutate(beginning_salary = beginning_salary/1000)
+
+salaries %>% 
+  select(current_salary, beginning_salary)
+```
+#### 12. 
+```{r}
+salaries %>% 
+  filter(gender == "female" , employment_category == "security officer")
+```
+
+#### 13. 
+```{r}
+salaries %>% 
+  group_by(employment_category) %>% 
+  summarise(avg_salary = mean(current_salary)*1000)
+```
+#### 14. 
+```{r}
+salaries %>% 
+  filter(gender == "male") %>% 
+  group_by(employment_category) %>% 
+  summarise(avg_salary = mean(current_salary)*1000)
+```
+#### 15. 
+```{r}
+salaries <- salaries %>% 
+  mutate(is_white = as.character(is_white))
+```
+
+```{r}
+salaries <- salaries %>% 
+  mutate(gender = as.character(gender))
+```
+
+
+```{r}
+salaries %>%
+  group_by(gender, is_white) %>% 
+  summarise(num_of_nonwhite = length(gender))
+```
+#### 16. 
+
+```{r}
+
+```
+
+## 2 pipes
+
+#### 1. 
+```{r}
+salaries %>% 
+  filter(educational_level <= 16) %>% 
+  group_by(educational_level) %>% 
+  summarise(avg_salary = mean(current_salary)) %>% 
+  arrange(desc(avg_salary))
+```
+#### 2. 
+```{r}
+salaries %>% 
+  filter(work_experience > 2) %>% 
+  group_by(employment_category, gender) %>% 
+  summarise(average_salary = mean(current_salary))
+```
+
+#### 3. 
+```{r}
+salaries %>% 
+  group_by(employment_category) %>% 
+  summarise(difference = abs(mean(current_salary) - median(current_salary))) %>% 
+  arrange(desc(difference))
+  
+```
+
+## missing values
+
+```{r}
+beer <- read_delim(file = "~/codeclan_homework_AbbyU/week_04/dplyr_practice_hw/data/beer.txt", delim = ";")
+```
+#### 1. 
+```{r}
+beer %>% 
+  filter(is.na(carbohydrates))
+```
+#### 2.
+```{r}
+beer %>% 
+  filter(is.na(brand))
+```
+#### 3.
+##### It would be more suitable to clean the data by dropping the missing values in 'brand' , as these tend to have missing values in the rest of the variables. The two that did not have NAs in percent has missing values in the rest of the variables, which could just be dropped
+```{r}
+cleaner_beer <- beer %>% 
+  filter(!is.na(brand))
+
+cleaner_beer %>% 
+  filter(is.na(brand))
+```
+
+## recoding
+
+```{r}
+inmates <- read_tsv(file = "~/codeclan_homework_AbbyU/week_04/dplyr_practice_hw/data/inmates.tsv")
+```
+#### 1. 
+```{r}
+inmates %>% 
+  distinct(gender)
+```
+
+```{r}
+inmates <- inmates %>% 
+  mutate(gender = recode(gender,
+                         "M" = "Male",
+                         "F" = "Female",
+                         .default = (gender)))
+
+inmates %>% 
+  distinct(gender)
+```
+#### 2. 
+
+```{r}
+inmates %>% 
+  distinct(race)
+```
+
+
+```{r}
+inmates <- inmates %>% 
+  mutate(race = str_to_title(race)) %>% 
+  mutate(race = case_when(
+    race == "White" ~ "White",
+    race == "Black" ~ "Black",
+    race == "Hispanic" ~ "Hispanic",
+    TRUE ~ "Other"
+  ))
+```
+
+```{r}
+inmates %>% 
+  distinct(race)
+```
+#### 3. 
+
+##### a.
+```{r}
+inmates <- inmates %>% 
+  mutate(bond_level = case_when(
+    bond_amount > 1000000 ~ "High",
+    TRUE ~ "normal"
+  ))
+```
+```{r}
+inmates %>% 
+  select(bond_amount, bond_level)
+```
+##### b.
+```{r}
+inmates %>% 
+  count(bond_level == "High")
+```
+#### 4. 
+```{r}
+inmates %>% 
+  distinct(detainer)
+```
+
+```{r}
+inmates <-inmates %>% 
+  mutate(detainer = str_to_title(detainer)) %>% 
+mutate(detainer = case_when(
+           detainer == "None" ~ "None",
+           detainer == "Immigration" ~ "Immigration",
+           detainer == "Federal" ~ "Federal",
+           TRUE ~ "Other"
+         ))
+```
+```{r}
+inmates %>% 
+  distinct(detainer)
+```
+
+
