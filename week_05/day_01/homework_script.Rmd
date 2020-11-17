@@ -1,0 +1,80 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+```
+#### 1. 
+
+```{r}
+backpack <- CodeClanData::backpack
+
+str(backpack)
+```
+#### 2.
+
+```{r}
+ggplot(backpack) +
+  aes(x = backpack_weight) +
+  geom_histogram()
+```
+The histogram shows the spread of the number of students carrying different backpack weights. It shows a clear curve where more students carry backpacks weighing approximately the median weight. Most students carry a 10 pound backpack.
+
+#### 3.
+
+```{r}
+ggplot(backpack) +
+  aes(x = backpack_weight, fill = sex) +
+  geom_histogram(position = "dodge")
+```
+The histogram shows that girls tend to carry lighter backpacks, the heaviest backpack carried weighed 25 pounds for a girl, and 35 pounds for a boy.
+
+#### 4.
+
+```{r}
+ggplot(backpack)+
+  aes(x = body_weight, y = backpack_weight)+
+  geom_point()+
+  scale_x_log10()
+```
+There seems to be some correlation between increasing body weight and increasing backpack weight, however the values that correspond to body weight values of more than 200 pounds has a much weaker correlation.
+
+
+#### 5.
+```{r}
+ggplot(backpack)+
+  aes(x = body_weight, y = backpack_weight)+
+  geom_point()+
+  facet_wrap(~sex)+
+  geom_smooth(method = "lm", se = FALSE)
+```
+The correlation between body weight and backpack weight is quite weak for women, but there seems to be no correlation between body weight and backpack weight for men.
+
+#### 6.
+
+```{r}
+backpack <- backpack %>% 
+  mutate(back_problems = factor(back_problems, levels = c("1", "0")))
+```
+
+
+```{r}
+ggplot(backpack)+
+  aes(x = "", y = "backpack_probkems",  fill = back_problems) +
+  geom_bar(stat = "identity", width = 1)+
+  coord_polar("y", start = 0)
+  
+```
+There is clearly a larger proportion of people without back problems than the ones who do, though I can't seem to put labels on the pie chart and identify the exact percentage.
+
+####7.
+
+```{r}
+
+```
+
+I don't completely understand this question -- and it's really late already so i'm going to bed.
+
+
