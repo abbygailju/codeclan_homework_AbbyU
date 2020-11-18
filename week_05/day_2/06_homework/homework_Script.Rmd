@@ -1,0 +1,118 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+library(CodeClanData)
+```
+
+```{r}
+revenue_data <- qb_revenue_breakdown
+monthly_sales <- qb_monthly_sales
+competitors <- qb_competitors
+device_data <- qb_device_data
+```
+
+```{r}
+ col_scheme <- c("#E89FE9", "#50434F", "#B6A7B5", "#F9A472", "#BD7040")
+```
+
+
+# MVP
+## Part 1
+
+### 1. 
+
+```{r}
+ggplot(revenue_data)+
+  aes(x = Year, y = Revenue, fill = Product,scale_fill_manual(col_scheme))+
+  theme_light()+
+  geom_col()+
+  labs(title = "Sources of Revenue")+
+  scale_colour_brewer()
+```
+### 2.
+```{r}
+monthly_sales <- monthly_sales %>% 
+  mutate(year = str_sub(Date, start = 1, end = 4))
+```
+
+```{r}
+ggplot(subset(monthly_sales %>% 
+                filter(year == 2019)
+              , Cashflow =="Kwikbit Unit 1 Sales"))+
+  aes(x = Date, y = Amount)+
+  geom_line(colour = "navy blue")+
+    theme_light()+
+  geom_point()+
+  labs(y = "total sales", title = "Sales of the Kwikbit Unit 1")+
+    geom_text(aes(label=Amount),hjust=1, vjust= -0.5)
+
+  
+```
+### 3. 
+
+
+```{r}
+ggplot(subset(monthly_sales %>% 
+                filter(year == 2019)
+              , Cashflow ==c("Total Revenue", "Cost")))+
+  geom_line(
+    aes(x = Date, y = Amount, colour = Cashflow))+
+    theme_light()+
+  labs(title = )
+
+```
+### 4.
+```{r}
+competitors <- competitors %>% 
+  mutate(revenue_in_1000000s = Revenue/1000000)
+```
+
+
+```{r}
+ggplot(competitors)+
+  aes(x = Year, y = revenue_in_1000000s, fill = Company)+
+  geom_area()+
+    theme_light()+
+  labs(y = "Revenue in 1,000,000s", title = "Annual Sales of Personal Fitness Trackers")
+```
+### 5. 
+```{r}
+ggplot(competitors)+
+  aes(x = Year, y = revenue_in_1000000s, colour = Company)+
+  geom_line()+
+  geom_point()+
+    theme_light()+
+  labs(y = "Revenue in 1,000,000s", title = "Annual Sales of Personal Fitness Trackers")+
+  geom_text(aes(label=revenue_in_1000000s),hjust=0.5, vjust= -1)
+```
+### 6.
+```{r}
+device_data %>% 
+  distinct(device)
+
+device_data %>% 
+  distinct(id)
+```
+
+```{r}
+device_data <- device_data %>% 
+  mutate(mins = mins/60)
+
+device_data <- device_data %>% 
+  mutate(time = hours+mins)
+```
+
+
+```{r}
+ggplot(device_data)+
+  aes(x = time, y = counts, colour = id)+
+  geom_line()+
+    theme_light()+
+  facet_wrap(~device, nrow = 1)+
+  labs(y = "Number of Steps")
+```
+
