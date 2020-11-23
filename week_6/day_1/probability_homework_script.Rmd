@@ -1,0 +1,154 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+```{r}
+library(tidyverse)
+library(janitor)
+library(prob)
+library(gtools)
+```
+#MVP
+
+```{r}
+titanic <- read_csv(here::here("data/titanic.csv"))
+```
+
+```{r}
+titanic %>% 
+  distinct(class)
+```
+
+```{r}
+titanic_staff_notstaff <- titanic %>% 
+  mutate(class = case_when(
+    str_detect(class, "[0-9]+") ~ "passenger",
+    TRUE ~ "staff"
+  ))
+```
+
+```{r}
+titanic_staff_notstaff %>% 
+  names()
+```
+
+#### number of deaths
+```{r}
+titanic_staff_notstaff %>% 
+  dplyr::filter(survived == "no") %>% 
+  nrow()
+```
+
+#### number of deaths for those that are staff
+```{r}
+titanic_staff_notstaff %>% 
+  dplyr::filter(survived == "no", class == "staff") %>% 
+  nrow()
+```
+
+#### number of deaths for those who are passengers
+```{r}
+titanic_staff_notstaff %>% 
+  dplyr::filter(survived == "no", class == "passenger") %>% 
+  nrow()
+```
+
+#### So more passengers than staff did die, but how many out of each group did not die?
+
+```{r}
+titanic_staff_notstaff %>% 
+  dplyr::filter(class == "passenger") %>% 
+  nrow()
+```
+so out of 1317 passengers, 817 died and 500 survived
+
+```{r}
+titanic_staff_notstaff %>% 
+  dplyr::filter(class == "staff") %>% 
+  nrow()
+```
+
+so out of 890 staff, 817 died and 73 survived
+
+#### likelihood of surviving
+```{r}
+titanic_staff <- titanic_staff_notstaff %>% 
+  dplyr::filter(class == "staff")
+titanic_passengers <- titanic_staff_notstaff %>% 
+  dplyr::filter(class == "passenger")
+```
+
+staff
+```{r}
+titanic_staff %>% 
+  dplyr::filter(survived == "yes") %>%
+  dplyr::summarise(prob = n()/nrow(titanic_staff))
+```
+passengers
+```{r}
+titanic_passengers %>% 
+  dplyr::filter(survived == "yes") %>%
+  dplyr::summarise(prob = n()/nrow(titanic_passengers))
+```
+The probability of surviving is higher among passengers than staff.
+
+## Extra questions
+
+#### 1 
+dice outcomes = 1,2,3,4,5,6
+less than 5 = 1,2,3,4
+4/6 = 2/3 = 0.6666666667
+
+#### 2
+```{r}
+rolldie(3,6) %>% 
+  nrow()
+```
+
+#### 3
+
+##### i.
+```{r}
+four_die <- dplyr::as_tibble(rolldie(4, 6))
+
+four_die<- four_die %>% 
+  mutate(sum = X1 + X2 + X3 + X4)
+
+four_die %>% 
+  dplyr::filter(sum == 5:7) %>% 
+  nrow()
+```
+
+##### ii
+```{r}
+four_die %>% 
+  dplyr::filter(sum == 5:7) %>% 
+  summarise(prob = n()/nrow(four_die))
+```
+
+##### iii
+###### the assumption is that the size of the outcome counts the permutations instead of combinations
+
+```{r}
+people <- c(1, 2, 3, 4, 5)
+
+chairs <- as_tibble(
+  permutations(
+    n = 5, 
+    r = 5, 
+    v = people, 
+    repeats.allowed = FALSE
+  )
+)
+```
+
+###### the 'right' order would be 1,2,3,4,5 or 5,4,3,2,1. So to count the probability, the number of permutations has to be calculated.
+
+```{r}
+nrow(chairs)
+```
+The probability is
+```{r}
+2/120
+```
+
