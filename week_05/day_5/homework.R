@@ -1,6 +1,7 @@
 library(tidyverse)
 library(shiny)
 library(shinythemes)
+library(DT)
 
 
 ui <-
@@ -38,11 +39,16 @@ fluidPage(themes = shinytheme("superhero"),
     
     tabPanel("Types of ingredients",
              h3("These are the most used ingredients for the recipes featured"),
-             plotOutput("indonesian_ingredient_types"))
-  )
+             plotOutput("indonesian_ingredient_types")),
+    tabPanel("Recipes",
+             h3("These are the recipes"),
+             dataTableOutput("recipes")))
+  ),
+                
+              
   )
 )
-)
+
 
 server <- function(input, output){
   outputplot <- eventReactive(input$cuisine_type,{
@@ -74,6 +80,11 @@ server <- function(input, output){
     
     output$indonesian_ingredient_types <- renderPlot({
       outputplottab()
+    })
+    
+    output$recipes <-renderDataTable({
+      number_of_ingredients %>% 
+        filter(cuisine == input$choice_of_cuisines)
     })
   
 }
