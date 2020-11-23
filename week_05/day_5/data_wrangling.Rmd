@@ -1,0 +1,161 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+library(here)
+library(janitor)
+```
+
+```{r}
+ingredients <- read_csv(here::here("02_Ingredients.csv")) %>% 
+  clean_names()
+recipes <- read_csv(here::here("01_Recipe_Details.csv")) %>% 
+  clean_names()
+ingredients_compound <- read_csv(here::here("03_Compound_Ingredients.csv")) %>% 
+  clean_names()
+ingredients_recipes <- read_csv(here::here("04_Recipe-Ingredients_Aliases.csv")) %>% 
+  clean_names()
+```
+
+```{r}
+str(recipes)
+```
+
+```{r}
+recipes %>% 
+  filter(cuisine == "South East Asia")
+```
+```{r}
+recipes <- recipes %>% 
+  mutate(title = recode(title, 
+    "Rendang Gaging (Beef Stew)" = "Indonesian beef rendang",
+    .default = as.character(title)
+  ))
+```
+
+```{r}
+recipes <- recipes %>% 
+  mutate(cuisine = case_when(
+    title == "Cucur Udang" ~  "Indonesian",
+    str_detect(title, "Sate") ~ "Indonesian",
+    str_detect(title, "[Rr]endang") ~ "Indonesian",
+    str_detect(title, "Indonesia+") ~ "Indonesian",
+   title == "Spicy Eggplant (Terong Balado)" ~ "Indonesian",
+   str_detect(title, "[Ss]ambal") ~ "Indonesian",
+   str_detect(title, "[Aa]yam+") ~ "Indonesian",
+   str_detect(title, "[Gg]oreng+") ~ "Indonesian",
+   title == "Telur Balado (Spicy Chile Sauce with Eggs)" ~ "Indonesian",
+   title == "Chicken In Coconut Sauce" ~ "Indonesian",
+   title == "Cap Cai" ~ "Indonesian",
+    TRUE ~ as.character(cuisine)))
+```
+
+```{r}
+recipes <- recipes %>% 
+  mutate(cuisine = case_when(
+    title == "Shrimp Sates with Greek Garlic Sauce" ~ "Greek",
+    title == "Chicken Sates with Peanut Curry Sauce" ~ "South East Asia",
+    title == "Malaysian Beef Rendang" ~ "Malaysian",
+    title == "Wok Tossed Mud Crab with Sate Sauce: Cua Xao Sate" ~ "Vietnamese",
+    title == "South African Sambal" ~ "South African",
+    title == "Sambal Belacan" ~ "Malaysian",
+    title == "Chinese Long Beans with Sambal Orange Water" ~ "Chinese",
+    title == "Thai-Style Rice Crackers with Persimmon Sambal" ~ "South East Asia",
+    title == "Tempura Shrimp Maki Roll with Sambal Aioli and Wasabi Tobbiko" ~ "Japanese",
+    title == "Halibut with Sambal Vinaigrette and Wasabi Cream" ~ "American",
+    title == "kachayam" ~ "Indian subcontinent",
+    TRUE ~ as.character(cuisine)
+  ))
+```
+
+
+```{r}
+recipes_indonesian <- recipes %>% 
+  filter(cuisine == "Indonesian")
+```
+
+```{r}
+recipes_indonesian
+```
+
+```{r}
+recipes_indonesian <- inner_join(recipes_indonesian, ingredients_recipes, by = "recipe_id")
+```
+```{r}
+recipes_indonesian <- recipes_indonesian %>% 
+  mutate(aliased_ingredient_name = str_remove_all(aliased_ingredient_name, "[Ww]ater")) %>% 
+  mutate(aliased_ingredient_name = na_if(aliased_ingredient_name, "")) %>% 
+            drop_na(aliased_ingredient_name)
+           
+```
+
+```{r}
+recipes %>% 
+  filter(cuisine == "British Isles") %>% 
+  nrow()
+```
+
+```{r}
+british_recipes <- recipes %>% 
+  filter(cuisine == "British Isles")
+```
+
+```{r}
+british_recipes <- left_join(british_recipes, ingredients_recipes, by = "recipe_id")
+```
+```{r}
+british_recipes <- british_recipes %>% 
+  mutate(aliased_ingredient_name = str_remove_all(aliased_ingredient_name, "[Ww]ater")) %>% 
+  mutate(aliased_ingredient_name = na_if(aliased_ingredient_name, ""))
+```
+
+```{r}
+british_recipes <- british_recipes %>% 
+  drop_na(aliased_ingredient_name)
+```
+
+
+```{r}
+british_recipes %>% 
+  group_by(recipe_id, title) %>% 
+  summarise(num_of_ingredients = length(unique(entity_id))) %>% 
+  arrange(desc(num_of_ingredients))
+  
+```
+
+```{r}
+number_of_ingredients_british <-british_recipes %>% 
+  group_by(recipe_id, title) %>% 
+  summarise(ingrednum = length(unique(entity_id))) %>% 
+  arrange(desc(ingrednum)) 
+```
+
+
+
+```{r}
+number_of_ingredients_indonesian <- recipes_indonesian %>% 
+  group_by(recipe_id, title) %>% 
+  summarise(ingrednum = length(unique(entity_id))) %>% 
+  arrange(desc(ingrednum)) 
+  
+```
+```{r}
+number_of_ingredients_indonesian <- number_of_ingredients_indonesian %>% 
+  mutate(cuisine = "Indonesian")
+```
+
+```{r}
+number_of_ingredients_british <- number_of_ingredients_british %>% 
+  mutate(cuisine = "British")
+```
+```{r}
+number_of_ingredients <- rbind(number_of_ingredients_british, number_of_ingredients_indonesian)
+```
+```{r}
+recipes_joined <- rbind(recipes_indonesian, british_recipes) %>% 
+  mutate(cuisine = if_else(cuisine == "British Isles", "British", "Indonesian"))
+```
+
