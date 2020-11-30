@@ -1,0 +1,79 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+## MVP 
+
+### 1
+
+```{r}
+library(tidyverse)
+library(infer)
+data("msleep")
+```
+
+
+Jabberwockies sleep for around 7 hours a night, on average. Perform an appropriate statistical test to determine whether the mean sleep_total in the sampled population of animal types differs from the typical value for jabberwockies.
+
+HO -- mean_length_sleep = 7
+HA -- mean_length != 7
+
+```{r}
+mean_rating <- msleep %>% 
+  select(sleep_total) %>% 
+  summarise(mean = mean(sleep_total))
+```
+
+```{r}
+sleep_distribution <- msleep %>%
+  specify(response = sleep_total) %>%
+  hypothesize(null = "point", mu = 7) %>%
+  generate(reps = 10000, type = "bootstrap") %>%
+  calculate(stat = "mean")
+
+sleep_distribution %>%
+  visualise(bins = 30) +
+  shade_p_value(obs_stat = mean_rating$mean, direction = "both")
+```
+```{r}
+p_value <- sleep_distribution %>%
+  get_p_value(obs_stat = mean_rating$mean, direction = "both")
+p_value
+```
+The p value is under 0.05 so the null hypothesis is rejected. Clearly the mean sleep total for the total animal population is not equal to 7.
+
+
+### Defining the Hypothesis
+
+#### You work for a independent coffee shop. You’ve performed a small survey in the local town and found that 40% of the people you randomly asked were aware of your shop in the town. You then conduct a marketing campaign by flyering local venues and targeting advertisements on social media. Finally you conduct a second small random survey in the town, asking if people are aware of your coffee shop. You want to test the hypothesis that the campaign has significantly increased awareness of the shop.
+
+##### Null hypothesis -  proportion of people people who are aware of the coffee shop after flyering is more than 40%
+###### proportion of people aware/all the people < 40%
+##### Alternative hypothesis -- the proportion of people aware of the coffee shop is more than 40% (it has increased awareness)
+###### proportion of people aware/all the people !<40%
+###### method used -- Bootstrapping and simulation would be the method used here to calculate a mean of the population and testing it against a null hypothesis. The simulated null distribution would be compared to the observed mean, where the calculatation of the p value would be to the right (more than 40%). This would be a two sample test testing paired variables.
+
+#### You work for a website design company and have performed an A/B test on the position of a banner on a website page promoting a particular item.
+##### Null hypothesis -- position of the banner has increased awareness of the particular item. Mu ctr rate of top placed banner > mu ctr rate of right hand side placed banner
+##### alternative hypothesis -- position of the banner has not increased awareness of the particular item.   Mu ctr rate of right hand side placed banner > mu ctr rate of top placed banner.
+##### method -- Bootstrapping and simulation used to test out the null hypothesis of the two dependent variables. 
+
+#### You work as an analyst for a car manufacturing company - they have specific standards they must meet for standards and regulation purposes. You have been asked to check the quality control of the manufacture of a particular car part. The part must have a width of 145mm, with a small (given) level of tolerance. You have been given data on a sample of 1,000 parts produced over the period of a week.
+##### Null hypothesis -- the mean width of the part is 145mm. mu width = 145mm
+##### alternative hypothesis -- mean width of the part is not 145mm. mu width != 145 mm
+##### method -- simulation of the bootstrapped values of the null hypothesis would be used and compared to the observed mean value. The p value would be calculated against both directions of the value, if it less than the given level of tolerance than the null hypothesis would be rejected.
+
+### Interpreting the results
+
+#### Coffee shop problem. Significance level: 0.05, calculated p-value: 0.07
+##### conclusion - Null hypothesis is not rejected, as it is statistically consistent with the null hypothesis that the proportion of people aware of the coffee shop after the flyering campaign has increased.
+
+#### Website company problem. Significance level: 0.01, p-value: 0.006
+##### conclusion : the null hypothesis is rejected
+
+#### Manufacturing company problem. Significance level: 0.05, p-value: 0.55
+##### conclusion - the null hypothesis is not rejected, as the data is statistically consistent with the null hypothesis.
+
+
+
