@@ -1,0 +1,108 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(dplyr)
+library(lubridate)
+library(tidyverse)
+library(tsibble)
+library(tsibbledata)
+library(feasts)
+
+date1 <- ymd_hms("2017-04-22 22:01:18")
+date2 <- ymd_hms("2001-11-07 10:09:56")
+
+library(nycflights13)
+
+airlines <- airlines
+airports <- airports
+flights <- flights
+planes <- planes
+```
+
+# dates and times
+
+## 1
+```{r}
+# year 
+year(date1)
+
+#month
+month(label = TRUE, abbr = FALSE, date1)
+
+#mday
+mday(date1)
+
+#yday
+yday(date1)
+
+#wday
+wday(date1)
+```
+
+## 2
+```{r}
+next_fortnight <- date1 + days(14)
+next_fortnight
+```
+```{r}
+previous_decade <- date1- years(10)
+previous_decade
+```
+
+## 3.
+```{r}
+this_year <- today()
+this_year
+```
+```{r}
+interval_years <- lubridate::interval(start = previous_decade, end = this_year)
+interval_years
+```
+
+##4 
+```{r}
+nyc_date1 <- with_tz(date1, tzone = "America/New_York")
+nyc_date1
+nyc_date2 <-with_tz(date2, tzone = "America/New_York")
+nyc_date2
+```
+```{r}
+flights <- dplyr::mutate(flights, departure_date = make_datetime(year, month, day, hour, minute))
+
+flights %>% select(departure_date)
+```
+
+# time familiarity
+
+## 6. 
+```{r}
+weather <- weather
+```
+```{r}
+weather
+```
+```{r}
+weather <- weather %>% 
+  mutate(date_time = make_datetime(year, month, day, hour))
+```
+```{r}
+str(weather, date_time)
+```
+
+
+```{r}
+weather %>% 
+  select(temp, humid, precip, date_time) %>% 
+ index_by(date = as_date(date_time)) %>%
+  summarise(temp_mean = mean(temp)) 
+```
+
+
+##7
+```{r}
+
+```
+
