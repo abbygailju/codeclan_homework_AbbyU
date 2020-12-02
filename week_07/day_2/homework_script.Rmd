@@ -1,0 +1,161 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+```{r}
+library(tidyverse)
+library(lubridate)
+library(tsibble)
+library(tsibbledata)
+library(fable)
+```
+
+```{r}
+bikes <- tsibbledata::nyc_bikes
+
+head(bikes)
+```
+## question 1
+### Create three new columns: one that stores only the year the bike was used, one that stores only the month the bike was used, and one that stores the date. Use the data stored in start_time to create these new columns.
+
+```{r}
+bikes <- bikes %>% 
+  mutate(year = year(start_time)) %>% 
+  mutate(month = month(start_time)) %>% 
+  mutate(date = as_date(start_time)) 
+
+bikes %>% 
+  select(year,month, date)
+```
+## question 2
+### Summarise the number of bike hire counts by month.
+
+```{r}
+bikes_tsbl <- bikes %>% 
+  as_tsibble(index = start_time, key = bike_id)
+```
+
+
+```{r}
+bikes_tsbl %>% 
+  index_by(month = month(start_time)) %>% 
+  summarise(counts = length(bike_id))
+```
+#### There seems to be a concentration of bike hires around the summer months, peaking around August and then decreasing towards Autumn and Winter.
+
+## Question 3 Now Summarise the number of bike hire counts by date
+
+```{r}
+bikes_tsbl %>% 
+  index_by(date) %>% 
+  summarise(counts = length(bike_id)) %>% 
+  ggplot +
+  aes(x = date, y = counts)+
+  geom_line()
+```
+
+## Question 4
+
+
+```{r}
+nyc_bikes_date_summary <- bikes_tsbl %>% 
+  index_by(date) %>%
+  summarise(bike_hire_counts = n())
+
+nyc_bikes_date_summary <- nyc_bikes_date_summary %>%
+  fill_gaps(bike_hire_counts = as.integer(median(bike_hire_counts)))
+
+nyc_bikes_date_summary 
+```
+
+```{r}
+fit <- nyc_bikes_date_summary %>% 
+  model(
+    snaive = SNAIVE(bike_hire_counts),
+    mean_model = MEAN(bike_hire_counts),
+    arima = ARIMA(bike_hire_counts)
+  )
+
+fit
+```
+
+## Question 5
+### build a forecast to predict bike use over the next four months
+
+```{r}
+forecast_1 <- fit %>% 
+  fabletools:: forecast(h = 120)
+
+forecast_1
+```
+
+```{r}
+forecast_1 %>% 
+  autoplot(nyc_bikes_date_summary)
+```
+## Question 6
+### Test your model accuracy : choose a training data set from your main dataset, build a forecast on the training set, and then plot the training set forecast against the real data. Calculate model accuracy.
+
+```{r}
+nyc_bikes_date_summary %>% 
+  distinct(date) %>% 
+  arrange()
+```
+
+
+```{r}
+train <- nyc_bikes_date_summary %>% 
+  filter_index("2018-01-01" ~ "2018-10-01")
+
+fit_train <- train %>% 
+  model(
+    mean_model = MEAN(nyc_bikes_date_summary),
+    arima = ARIMA(nyc_bikes_date_summary),
+    snaive = SNAIVE(nyc_bikes_date_summary)
+  )
+
+fit_train
+```
+
+
+
+```{r}
+forecast_test <- fit_train %>% 
+  fabletools::forecast(h = 120)
+
+accuracy_mode1 <- fabletools::accuracy(forecast_test, nyc_bikes_date_summary)
+
+accuracy_mode1
+```
+
+## Question 7
+
+## Question 8
+
+```{r}
+bikes %>% 
+  ggplot+
+  aes(x = start_lat, y = end_lat, colour = month)+
+  geom_point()+
+  facet_wrap(~ bike_id)
+```
+
+## question 9
+```{r}
+library(leaflet)
+```
+```{r}
+nyc_bike_spatial <- bikes %>% 
+  unite(start, c("start_lat", "start_long"), sep = ",") %>% 
+  unite(end, c("end_lat", "end_long"), sep = ",")
+
+nyc_bike_spatial %>% 
+  select(start, end)
+```
+```{r}
+leaflet(data = bikes) %>% 
+  addMarkers(lng = bikes$start_long, lat = bikes$start_lat)
+```
+
+
+
