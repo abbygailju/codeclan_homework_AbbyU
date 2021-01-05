@@ -1,0 +1,51 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+```{r}
+library(tidyverse)
+library(janitor)
+library(lubridate)
+library(tsibble)
+```
+
+```{r}
+scotland_cancer <- read_csv("../clean_data/cancer_incidence_scotland") %>% 
+  clean_names() %>% 
+  select(-hb)
+```
+
+
+```{r}
+borders_all_cancer <- scotland_cancer %>% 
+  filter(hb_name_y == "NHS Borders",
+         cancer_site == "All cancer types",
+         sex == "All")
+```
+
+
+
+```{r}
+borders_tsibble <- as_tsibble(borders_all_cancer, index = year)
+```
+
+```{r}
+borders_tsibble %>% 
+  ggplot()+
+  aes(x = year, y = crude_rate)+
+  geom_line()
+```
+
+
+```{r}
+scotland_cancer %>% 
+  filter(cancer_site == "All cancer types",
+         sex != "All") %>% 
+  ggplot()+
+ aes(x = year, y = crude_rate, colour = hb_name_y) +
+ geom_line(size = 0.5L) +
+ scale_color_hue() +
+ theme_minimal() +
+ facet_wrap(vars(sex))
+```
+

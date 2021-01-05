@@ -1,0 +1,41 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+library(modelr)
+library(GGally)
+library(broom)
+library(ggfortify)
+```
+
+```{r}
+project <- read_csv("../day_1/6_homework/data/project_management.csv")
+
+project
+```
+
+```{r}
+project %>% 
+  ggplot()+
+  aes(x = estimated_length,  y = actual_length)+
+  geom_point()
+```
+
+```{r}
+model <- lm(formula = actual_length ~ estimated_length, data = project)
+
+model
+```
+
+#### Interpret the regression coefficient of estimated_length (i.e. slope, gradient) you obtain from the model. How do you interpret the r2 value reported by the model?
+
+```{r}
+glance(model)
+```
+The r squared is 0.6474772 which shows the regression fits the model to some extent
+ 
+#### Is the relationship statistically significant?
+

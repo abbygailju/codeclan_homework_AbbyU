@@ -1,0 +1,146 @@
+---
+title: "Cancer incidence in the Borders"
+author: "Abbygail Utama"
+date: "12/16/2020"
+output: html_document
+---
+
+```{r, include = FALSE}
+library(tidyverse)
+library(janitor)
+library(plotly)
+library(lubridate)
+library(tsibble)
+
+cancer_incidence <- read_csv("../clean_data/cancer_incidence_scotland.csv")
+
+scotland <- read_csv("../clean_data/scotland_wide.csv")
+
+borders <- cancer_incidence %>% 
+  filter(health_board == "NHS Borders")
+
+nationwide_cancer <- rbind(cancer_incidence, scotland)
+```
+
+# Scotland wide data
+
+### Cancer incidence between sexes across Scotland
+
+```{r}
+ggplotly(nationwide_cancer %>% 
+  filter(sex != "All",
+         health_board == "scotland_wide",
+         cancer_site == "All cancer types") %>% 
+  ggplot()+
+  aes(x = year, y = crude_rate, colour = sex)+
+    labs(x = "Year", y = "Crude rate", title = "Cancer incidence between men and women")+
+  geom_line())
+```
+
+
+### Cancer incidence by health board in Scotland
+
+
+```{r}
+ggplotly(nationwide_cancer %>% 
+  filter(sex == "All",
+         cancer_site == "All cancer types") %>% 
+  ggplot()+
+  aes(x = year, y = crude_rate, colour = health_board)+
+    labs(x = "Year", y = "Crude rate", title = "Crude rate of all cancer types per health board")+
+  geom_line()+
+  theme_minimal())
+```
+
+
+### Top 5 cancer incidence by cancer type in the past 24 years
+
+```{r}
+ggplotly(nationwide_cancer %>% 
+  filter(sex == "All",
+         cancer_site != "All cancer types",
+         health_board == "scotland_wide") %>% 
+    group_by(year) %>% 
+  slice_max(crude_rate, n = 3) %>% 
+ggplot()+
+  aes(x = year, y = crude_rate, fill = cancer_site)+
+   theme(legend.position = "none")+
+    labs(x = "Year", y = "Crude rate", title = "Top 5 highest incidences of cancer")+
+  geom_col())
+```
+
+
+# Cancer incidence in the Borders compared to Scotland wide data
+
+### Cancer incidence in the Borders compared to Scotland as a whole
+
+```{r}
+ggplotly(nationwide_cancer %>%
+ filter(sex %in% "All",
+        cancer_site == "All cancer types",
+        health_board %in% c("scotland_wide", "NHS Borders")) %>%
+ ggplot() +
+ aes(x = year, y = crude_rate, colour = health_board) +
+ geom_line(size = 1L) +
+  geom_smooth(span = 0.75)+
+  labs(x = "Year", y = "Crude rate", title = "Cancer incidence in the Borders compared to Scotland wide")+
+ scale_color_hue() +
+ theme_minimal())
+```
+### The top 5 highest incidences of cancer per health board over the years (1994 - 2018)
+
+```{r}
+nationwide_cancer %>% 
+  filter(cancer_site == "All cancer types",
+         sex == "All") %>% 
+  group_by(year) %>% 
+  slice_max(crude_rate, n = 5) %>% 
+  select(year, health_board, crude_rate)
+```
+#### When this table is graphed, it is clear that NHS Borders is present in the top 5 21 out of the 24 years recorded
+
+```{r}
+nationwide_cancer %>% 
+  filter(cancer_site == "All cancer types",
+         sex == "All") %>% 
+  group_by(year) %>% 
+  slice_max(crude_rate, n = 5) %>% 
+  ggplot()+
+  aes(x = year, y = crude_rate, fill = (health_board == "NHS Borders"))+
+  scale_fill_discrete(name = " ", labels = c("Other health boards", "NHS Borders"))+
+  labs(x = "Year", y = "Crude rate", title = "Top 5 Health Boards with Highest Incidence of Cancer in Scotland")+
+  geom_col()
+```
+# Cancer data in the Borders
+
+### Breakdown of cancer incidence in the Borders by type of cancer, over time
+
+
+```{r}
+ggplotly(borders %>%
+ filter(sex %in% "All",
+        cancer_site != "All cancer types") %>%
+ ggplot() +
+ aes(x = year, y = crude_rate, colour = cancer_site) +
+ geom_line(size = 1L) +
+ scale_color_hue() +
+   labs(x = "Year", y = "Crude rate", title = "Cancer incidence in the Borders", fill = "Type of cancer")+
+ theme(legend.position = "none"))
+```
+
+```{r, warning = FALSE}
+ggplotly(borders %>% 
+  filter(sex != "All",
+         cancer_site != "All cancer types") %>% 
+    group_by(year, sex) %>% 
+  slice_max(crude_rate, n = 3) %>% 
+  ggplot()+
+  aes(x = year, y = crude_rate, colour = cancer_site)+
+  facet_wrap(~ sex)+
+   theme(legend.position = "none")+
+    labs(x = "Year", y = "Crude rate", title = "Top 3 highest incidences of cancer for men and women over the years")+
+  geom_line()+
+    geom_point())
+```
+
+

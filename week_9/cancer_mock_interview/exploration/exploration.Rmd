@@ -1,0 +1,100 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+library(janitor)
+library(plotly)
+library(lubridate)
+library(tsibble)
+```
+```{r}
+cancer_incidence <- read_csv("../clean_data/cancer_incidence_scotland.csv")
+
+scotland <- read_csv("../clean_data/scotland_wide.csv")
+```
+```{r}
+borders <- cancer_incidence %>% 
+  filter(health_board == "NHS Borders")
+```
+
+```{r}
+ggplotly(borders %>% 
+  filter(cancer_site != "All cancer types",
+         sex == "All") %>% 
+ ggplot() +
+ aes(x = year, y = crude_rate, fill = cancer_site) +
+ geom_area(size = 1L) +
+ scale_fill_hue() +
+ labs(x = "Year", y = "Crude rate", title = "Cancer incidence in the Borders", fill = "Type of cancer") +
+ theme_minimal())
+```
+```{r}
+ggplotly(borders %>%
+ filter(sex %in% "All",
+        cancer_site != "All cancer types") %>%
+ ggplot() +
+ aes(x = year, y = crude_rate, colour = cancer_site) +
+ geom_line(size = 1L) +
+ geom_smooth(span = 0.75) +
+ scale_color_hue() +
+   labs(x = "Year", y = "Crude rate", title = "Cancer incidence in the Borders", fill = "Type of cancer")+
+ theme_minimal())
+```
+
+```{r}
+nationwide_cancer <- rbind(cancer_incidence, scotland)
+```
+```{r}
+
+ggplotly(nationwide_cancer %>%
+ filter(sex %in% "All",
+        cancer_site == "All cancer types",
+        health_board %in% c("scotland_wide", "NHS Borders")) %>%
+ ggplot() +
+ aes(x = year, y = crude_rate, colour = health_board) +
+ geom_line(size = 1L) +
+  geom_smooth(span = 0.75)+
+  labs(x = "Year", y = "Crude rate", title = "Cancer incidence in the Borders compared to Scotland wide")+
+ scale_color_hue() +
+ theme_minimal())
+```
+```{r}
+cancer_tsibble <- nationwide_cancer %>% 
+  as_tsibble(index = year)
+```
+```{r}
+nationwide_cancer %>% 
+  filter(year == 1994) %>% 
+  slice_max(crude_rate, n = 10)
+```
+
+```{r}
+nationwide_cancer %>% 
+  filter(cancer_site == "All cancer types",
+         sex == "All") %>% 
+  group_by(year) %>% 
+  slice_max(crude_rate, n = 5) %>% 
+  ggplot()+
+  aes(x = year, y = crude_rate, fill = (health_board == "NHS Borders"))+
+  scale_fill_discrete(name = " ", labels = c("Other health boards", "NHS Borders"))+
+  labs(x = "Year", y = "Crude rate", title = "Top 5 Health Boards with Highest Incidence of Cancer in Scotland")+
+  geom_col()
+```
+```{r}
+ggplotly(borders %>% 
+  filter(sex != "All",
+         cancer_site != "All cancer types") %>% 
+    group_by(year, sex) %>% 
+  slice_max(crude_rate, n = 3) %>% 
+  ggplot()+
+  aes(x = year, y = crude_rate, colour = cancer_site)+
+  facet_wrap(~ sex)+
+   theme(legend.position = "none")+
+    labs(x = "Year", y = "Crude rate", title = "Top 3 highest incidences of cancer for men and women over the years")+
+  geom_line())
+  
+```
+
