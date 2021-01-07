@@ -1,0 +1,77 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+# Manual model development
+```{r}
+library(tidyverse)
+library(GGally)
+library(modelr)
+library(car)
+library(lubridate)
+```
+```{r}
+houses <- read_csv("../day_3/data/kc_house_data.csv")
+```
+## Tidy up the data ready for regression:
+
+```{r}
+glimpse(houses)
+summary(houses)
+```
+```{r}
+houses <- houses %>% 
+  mutate(year = year(date)) %>% 
+  mutate(renovated = ifelse(yr_renovated > 0, TRUE, FALSE)) %>% 
+  mutate(waterfront = as.logical(waterfront)) %>% 
+  mutate(view = forcats::as_factor(view)) %>% 
+  mutate(condition = forcats::as_factor(condition)) %>% 
+  mutate(grade = cut(grade, breaks = c(-Inf, 7, 11, 13),
+labels = c("falls_short", "average", "great"), right = FALSE))
+```
+
+
+```{r}
+houses_tidy <- houses %>% 
+  mutate(age = year - yr_built) %>%  #changing the year it was built to the age of the house
+    select(-c(zipcode, lat, long, sqft_living15, date, year, yr_built, yr_renovated))
+  
+```
+
+
+```{r}
+houses_tidy_numeric <- houses_tidy %>%
+  select_if(is.numeric)
+
+houses_tidy_nonnumeric <- houses_tidy %>%
+  select_if(function(x) !is.numeric(x))
+```
+
+```{r}
+ggpairs(houses_tidy_numeric)
+```
+```{r}
+model1 <- lm(price ~ sqft_living + age +sqft_lot15, data = houses_tidy_numeric)
+model1
+```
+* every sq foot of living space correponds to an increase of £307.9 in price
+* each year older of the house corresponds to an increase of £2352
+* every extra square foot of the neighbouring 15 houses results in a decrease of £59
+
+```{r}
+plot(model1)
+```
+```{r}
+summary(model1)
+```
+```{r}
+houses_tidy_nonnumeric <- houses_tidy_nonnumeric %>% 
+  select(-id)
+
+  houses_tidy_nonnumeric$price <- houses_tidy$price
+```
+
+```{r}
+ggpairs(houses_tidy_nonnumeric)
+```
+
