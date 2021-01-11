@@ -1,0 +1,36 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+# Homework Quiz
+
+### 1. Overfitting -- the date of birth may not be very relevant
+
+### 2. The second, as it is lower
+
+### 3. The first one, as the adjusted r square is higher. The higher r square may be down to more variables.
+
+### 4. It is not overfitting
+
+### 5. It is the cross validation  to find the average mean squared error and compare models. The dataset is divided into the number of k folds (5 or 10). Then k-1 of the divided sets are set as training data, and the other one becomes the test set. Fit a mode on the training set and evaluate it on the test set. repeat this on each set, then summarise the skill of the model based on the scores of the mean squared error of each model.
+
+### 6. this is the set of data that provides an evaluatation of the model
+
+### 7. It is a method to select variables for a model. It starts with all the predictors, and check which predictor reduces the r squared the most to remove that predictor. 
+
+### 8. It is the process where all the models are compared (with different predictors and different numbers of predictors) so that the best model can be chosen based on the summary statistics
+
+### 9. 
+
+### 10. 
+
+### 11. It compares the predicted probability in the test data set to the training data set as a measure of how the score compares to the training data set
+
+### 12. if it measures higher than 0.2
+
+### 13. 
+
+### 14. The reality of the situation needs to be checked? Try to check what the real-life situation is like?
+
+### 15. 
