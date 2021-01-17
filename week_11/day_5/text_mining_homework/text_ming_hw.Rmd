@@ -1,0 +1,112 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(tidytext)
+library(tidyverse)
+library(janeaustenr)
+library(textdata)
+```
+```{r}
+pride_and_p <- tibble(
+  sentence = 1:length(prideprejudice),
+  text = prideprejudice
+) %>%
+  unnest_tokens(word, text)
+```
+
+```{r}
+sense_and_s <- tibble(
+  sentence = 1:length(sensesensibility),
+  text = sensesensibility
+) %>%
+  unnest_tokens(word, text)
+```
+
+```{r}
+p_and_s <- rbind(pride_and_p, sense_and_s)
+```
+
+
+## 1. Find the most common words in both Pride & Prejudice and Sense & Sensibility.
+```{r}
+p_and_s %>%
+  count(word, sort = TRUE)
+```
+
+## 2. Find the most common words in both Pride & Prejudice and Sense & Sensibility, not including stop words.
+
+```{r}
+p_and_s %>% 
+  anti_join(filter(stop_words, lexicon == "snowball")) %>% 
+  count(word, sort = TRUE)
+```
+
+## 3. Find the most common sentiment words in both Pride & Prejudice and Sense & Sensibility.
+
+```{r}
+pride_and_p_sentiments <- tibble(
+  sentence = 1:length(prideprejudice),
+  text = prideprejudice
+) %>%
+  unnest_tokens(word, text) %>% 
+anti_join(stop_words) %>% 
+  left_join(get_sentiments("bing"))
+```
+
+```{r}
+sense_and_s_sentiments <- tibble(
+  sentence = 1:length(sensesensibility),
+  text = sensesensibility
+) %>%
+  unnest_tokens(word, text) %>% 
+  anti_join(stop_words) %>% 
+  left_join(get_sentiments("bing"))
+```
+
+```{r}
+join_sentiments <-  rbind(pride_and_p_sentiments, sense_and_s_sentiments)
+```
+
+```{r}
+join_sentiments %>% 
+  drop_na(sentiment) %>% 
+  count(word, sort = TRUE) %>% 
+  head(10)
+```
+# extension
+```{r}
+pandptibble <- tibble(pride_and_p_sentiments %>% 
+  drop_na(sentiment) %>%
+  group_by(sentiment) %>% 
+  count(word, sort = TRUE) %>% 
+  head(10) %>% 
+  mutate(book = "pride and prejudice"))
+```
+
+
+```{r}
+sandstibble <- tibble(sense_and_s_sentiments %>% 
+  drop_na(sentiment) %>%
+  group_by(sentiment) %>% 
+  count(word, sort = TRUE) %>% 
+  head(10) %>% 
+  mutate(book = "sense and sensibility"))
+```
+
+```{r}
+sentiment_tibble <- rbind(pandptibble, sandstibble)
+```
+
+```{r}
+ggplot(sentiment_tibble) +
+ aes(x = word, fill = sentiment, weight = n) +
+ geom_bar() +
+ scale_fill_hue() +
+ theme_minimal() +
+ facet_grid(vars(book), vars())+
+  coord_flip()
+```
+
