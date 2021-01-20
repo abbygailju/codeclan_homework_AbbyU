@@ -1,0 +1,46 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+# MVP
+### linear regression model
+
+```{r}
+library(tidyverse)
+library(janitor)
+
+cars <- read_csv("../day_3/car_dekho_details.csv") %>% 
+  clean_names() %>% 
+  select(-"name")
+```
+
+```{r}
+library(GGally)
+
+ggpairs(cars)
+```
+
+```{r}
+modelyear <- lm(selling_price ~ year, data = cars)
+```
+
+```{r}
+summary(modelyear)
+```
+```{r}
+library(ggfortify)
+autoplot(modelyear)
+```
+
+```{r}
+modelkm_driven <- lm(selling_price ~ km_driven, data = cars)
+```
+
+```{r}
+summary(modelkm_driven)
+```
+
+```{r}
+autoplot(modelkm_driven)
+```
+
